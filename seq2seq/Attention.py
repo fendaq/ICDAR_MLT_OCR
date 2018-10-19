@@ -18,9 +18,9 @@ class Attention_LSTM(object):
 
 
 
-    def attend(self,output,reshaped_contexts,num_ctx,last_alpha,idx,reuse=None):
+    def attend(self,output,reshaped_contexts,num_ctx,last_alpha,reuse=None):
         """ Attention Mechanism. """
-        with tf.variable_scope('attend_t%s'%idx,reuse=reuse):
+        with tf.variable_scope('attend',reuse=reuse):
             output=tf.expand_dims(output,axis=1)
             #last_alpha=tf.expand_dims(last_alpha,axis=2)
             #print(last_alpha)
@@ -60,31 +60,21 @@ class Attention_LSTM(object):
             #masks=tf.cast(tf.sequence_mask(batch_size * [max_len-1], max_len),tf.float32)
             masks=tf.where(tf.equal(sentences,133),x=sentences-sentences,y=sentences-sentences+1)#ignord <PAD>
             masks=tf.cast(masks,tf.float32)
-       # with tf.variable_scope("word_embedding"):
-        #    embedding_matrix = tf.get_variable(name='weights',shape=[self.vocab_size, self.embed_dim],trainable=self.is_train)
-        #lstm=tf.nn.rnn_cell.BasicLSTMCell(num_units=self.num_units)
+        with tf.variable_scope("word_embedding"):
+            embedding_matrix = tf.get_variable(name='weights', shape=[self.vocab_size, self.embed_dim],trainable=self.is_train)
         lstm=tf.contrib.rnn.LSTMCell(self.num_units,cell_clip=10.,initializer=tf.orthogonal_initializer)
         with tf.variable_scope('reuse_scope') as reuse_scope:
             for idx in range(self.max_decode_length):
 
-                with tf.variable_scope("attend") as att_scope:
-                    list_contex=[]
-                    num=0
-                    for single_contex in reshaped_contexts:
-                        single_contex=tf.squeeze(single_contex,axis=1)
-                        alpha = self.attend(output=self.last_output,reshaped_contexts=single_contex,num_ctx=num_ctx,last_alpha=alpha,idx=0,reuse=num!=0 or idx!=0)
-                        context = tf.reduce_sum(single_contex * tf.expand_dims(alpha, 2),axis=1)
-                        list_contex.append(context)
-                        #att_scope.reuse_variables()
-                        #reshaped_contexts=tf.reshape(reshaped_contexts,[-1,num_ctx,dim_ctx])#*tf.expand_dims(1-alpha, 2)
-                        alphas.append(alpha)
-                        num+=1
-                    context=tf.concat(list_contex,axis=-1)
-                    #print(context)
-                    # Embed the last word
+                with tf.variable_scope("attend"):
+                    alpha = self.attend(output=self.last_output, reshaped_contexts=reshaped_contexts, num_ctx=num_ctx,
+                                        last_alpha=alpha)
+                    context = tf.reduce_sum(contexts * tf.expand_dims(alpha, 2), axis=1)
+                    alphas.append(alpha)
+
                 with tf.variable_scope("word_embedding"):
-                    #word_embed = tf.nn.embedding_lookup(embedding_matrix,self.last_word)
-                    word_embed=tf.one_hot(self.last_word,depth=self.vocab_size)
+                    word_embed = tf.nn.embedding_lookup(embedding_matrix,self.last_word)
+                    #word_embed=tf.one_hot(self.last_word,depth=self.vocab_size)
                 with tf.variable_scope("lstm"):
                     current_input = tf.concat([context, word_embed], 1)
                     output, state = lstm(current_input, self.last_state)
