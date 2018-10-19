@@ -25,7 +25,7 @@ def augment_image(image):
     distorted_image = tf.slice(image, bbox_begin, bbox_size)
 
     # Randomly chooses one of the 4 interpolation methods
-    
+
     distorted_image = tf.clip_by_value(distorted_image, -1.5, 1.5)
 
   return distorted_image
