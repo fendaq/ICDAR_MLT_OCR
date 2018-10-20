@@ -1,4 +1,5 @@
 import tensorflow as tf
+from config import args
 
 class Attention_LSTM(object):
     def __init__(self,num_units,max_num_decode,vocab_size,
@@ -37,7 +38,7 @@ class Attention_LSTM(object):
     def output(self,contexts,initial_state=None,masks=None,sentences=None):
         '''
 
-        :param contexts: (batch_size,4,time,feature)
+        :param contexts: (batch_size,time,feature)
         :param initial_state:
         :param masks:
         :param sentences:
@@ -48,8 +49,7 @@ class Attention_LSTM(object):
         cross_entropies=[]
 
         self.last_state=initial_state
-        dim_ctx = contexts[0].get_shape().as_list()[-1]
-        num_ctx = contexts[0].get_shape().as_list()[2]
+        num_ctx = contexts[0].get_shape().as_list()[1]
         batch_size=self.batch_size
         alpha=tf.zeros(shape=[batch_size,num_ctx],dtype=tf.float32)
         reshaped_contexts = contexts#tf.reshape(contexts, [-1, dim_ctx])
@@ -58,7 +58,7 @@ class Attention_LSTM(object):
         self.last_output=tf.zeros(shape=(batch_size,self.num_units))
         if masks is None and self.is_train:
             #masks=tf.cast(tf.sequence_mask(batch_size * [max_len-1], max_len),tf.float32)
-            masks=tf.where(tf.equal(sentences,133),x=sentences-sentences,y=sentences-sentences+1)#ignord <PAD>
+            masks=tf.where(tf.equal(sentences,args.pad_token),x=sentences-sentences,y=sentences-sentences+1)#ignord <PAD>
             masks=tf.cast(masks,tf.float32)
         with tf.variable_scope("word_embedding"):
             embedding_matrix = tf.get_variable(name='weights', shape=[self.vocab_size, self.embed_dim],trainable=self.is_train)
@@ -123,3 +123,24 @@ class Attention_LSTM(object):
         logits = tf.layers.dense(expanded_output,units=self.vocab_size,activation=None,name='fc')
 
         return logits
+
+def attention_layer(inputs,labels,initial_state=None,mask=None,train_phase=True):
+    '''
+
+    :param inputs: shape(batch,time,dim)
+    :param labels: shape(batch,max_len_word)
+    :param initial_state: initial state of LSTM
+    :param mask:
+    :param train_phase:
+    :return: pred and loss
+    '''
+    with tf.name_scope('attention_lstm'):
+        att_lstm=Attention_LSTM(num_units=args.lstm_units,
+                                max_num_decode=args.max_len_word,
+                                vocab_size=len(args.classes)+3,embed_dim=args.embed_dim,
+                                start_token=args.start_token,end_token=args.end_token,
+                                is_train=train_phase,batch_size=args.batch_size)
+
+        loss,pred,_=att_lstm.output(inputs,initial_state=initial_state,masks=mask,sentences=labels)
+
+    return loss,pred

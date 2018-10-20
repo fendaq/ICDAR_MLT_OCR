@@ -51,10 +51,15 @@ def parse_args():
     parser.add_argument('--decay_epoch', type=int, default=10, help='decay epoch')
 
     parser.add_argument('--lr', type=float, default=0.0002, help='The learning rate')
-    parser.add_argument('--back_bone_type', type=str, default='vgg',
-                        help='[vgg,resnet,densenet,inception]')
+    parser.add_argument('--back_bone_type', type=str, default='vgg',help='[vgg,resnet,densenet,inception]')
 
     parser.add_argument('--classes', type=str, default='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', help='dict_class')
+    parser.add_argument('--start_token', type=int, default=1, help='The index of <EOS>')
+    parser.add_argument('--end_token', type=int, default=2, help='The index of <SOS>')
+    parser.add_argument('--pad_token', type=int, default=0, help='The index of <PAD>')
+    parser.add_argument('--embed_dim', type=int, default=128, help='The embed dim')
+    parser.add_argument('--lstm_units', type=int, default=256, help='The units of RNN')
+
     parser.add_argument('--img_height', type=int, default=64, help='The size of image')
     parser.add_argument('--img_width', type=int, default=300, help='The size of image')
     parser.add_argument('--max_len_word', type=int, default=20, help='The max length of the words')
