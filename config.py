@@ -57,6 +57,7 @@ def parse_args():
     parser.add_argument('--classes', type=str, default='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', help='dict_class')
     parser.add_argument('--img_height', type=int, default=64, help='The size of image')
     parser.add_argument('--img_width', type=int, default=300, help='The size of image')
+    parser.add_argument('--max_len_word', type=int, default=20, help='The max length of the words')
     parser.add_argument('--img_ch', type=int, default=3, help='The size of image channel')
     parser.add_argument('--augment_flag', type=bool, default=False, help='Image augmentation use or not')
 
